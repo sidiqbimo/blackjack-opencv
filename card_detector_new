@@ -1,0 +1,66 @@
+import cv2
+import numpy as np
+from tensorflow.keras.models import load_model
+import json
+import os
+
+model_path = "D:\\Programming\\Python\\cardGameProject\\card_classifier_model.keras"
+model = load_model(model_path)
+label_dict = {0: 'K_Diamond', 1: 'K_Sekop'}
+
+def load_hsv_settings(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            settings = json.load(file)
+        return settings
+    else:
+        return {"lower_bound": [0, 0, 70], "upper_bound": [180, 40, 140]}
+
+json_file_path = "D:/Programming/Python/cardGameProject/hsv_settings.json"
+hsv_settings = load_hsv_settings(json_file_path)
+hsv_lower_bound, hsv_upper_bound = np.array(hsv_settings["lower_bound"]), np.array(hsv_settings["upper_bound"])
+
+def preprocess_image(image):
+    image = cv2.resize(image, (128, 128))
+    image = image / 255.0
+    return np.expand_dims(image, axis=0)
+
+cam = cv2.VideoCapture(0)
+if not cam.isOpened():
+    print("Error: Couldn't open camera.")
+    exit(1)
+
+while True:
+    ret, frame = cam.read()
+    if not ret:
+        print("Error: Couldn't capture frame.")
+        break
+
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, hsv_lower_bound, hsv_upper_bound)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    for contour in contours:
+        epsilon = 0.02 * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, epsilon, True)
+        if len(approx) == 4:
+            x, y, w, h = cv2.boundingRect(approx)
+            card_image = frame[y:y + h, x:x + w]
+
+            if card_image.size > 0:
+                preprocessed_card = preprocess_image(card_image)
+                prediction = model.predict(preprocessed_card)
+                class_id = np.argmax(prediction)
+                confidence = prediction[0][class_id]
+
+                if confidence > 0.7:
+                    label = f"{label_dict[class_id]} ({confidence:.2f})"
+                    cv2.drawContours(frame, [approx], 0, (0, 255, 0), 2)
+                    cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+    cv2.imshow("Card Classification", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cam.release()
+cv2.destroyAllWindows()
