@@ -73,7 +73,7 @@ def gamecalibrate():
     sys.exit() 
 
 menu.add.button('Play Blackjack', gamestart)
-menu.add.button('Play Crazy 8', gamecrazy)
+menu.add.button('Play Traditional Heart', gamecrazy)
 menu.add.button('Calibrate', gamecalibrate)
 menu.add.button('Guide', lambda: print("Guide"))
 menu.add.button('Quit', pygame_menu.events.EXIT)

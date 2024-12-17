@@ -7,7 +7,9 @@ import pygame
 import sys
 import subprocess
 
-model_path = "D:\\Programming\\Python\\cardGameProject\\kaggle_set\\train\\\card_classifier_model.keras"
+# model_path = "D:\\Programming\\Python\\cardGameProject\\kaggle_set\\train\\\card_classifier_model.keras"
+# model_path = "D:\\Programming\\Python\\cardGameProject\\akk-card_classifier_model.keras"
+model_path = "D:\\Programming\\Python\\cardGameProject\\akk-card_classifier_model.keras"
 model = load_model(model_path)
 
 

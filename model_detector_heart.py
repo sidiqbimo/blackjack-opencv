@@ -17,10 +17,7 @@ font = pygame.font.Font(None, 36)
 window_size = (600,800)
 
 
-# model_path = "D:\\Programming\\Python\\cardGameProject\\kaggle_set\\train\\card_classifier_model.keras"
-# model_path = "D:\\Programming\\Python\\cardGameProject\\new18card_classifier_model.keras"
 model_path = "D:\\Programming\\Python\\cardGameProject\\akk-card_classifier_model.keras"
-
 model = load_model(model_path)
 
 
@@ -272,7 +269,7 @@ def overlay_image_center(frame, overlay):
     return frame
 
 def reset_game():
-    global blackjack_reached, busted_reached, total_blackjack_value, dealer_cards, dealer_card_values, start_time, player_bid, win_reached, lost_reached, show_second_card, detection_started, game_started, push_reached, bank_updated
+    global blackjack_reached, busted_reached, total_blackjack_value, dealer_cards, dealer_card_values, start_time, player_bid, win_reached, lost_reached, show_second_card, detection_started, game_started, push_reached
 
     blackjack_reached = False
     busted_reached = False
@@ -286,7 +283,6 @@ def reset_game():
 
     win_reached = False
     lost_reached = False
-    bank_updated = False
     push_reached = False
     detection_started = False
     game_started = False
@@ -424,13 +420,11 @@ def display_dealer_area(screen, font):
     screen.blit(bank_total_text, (120, 10))  # Adjust position as needed
 
 
-
 initialize_dealer_cards()
 game_started = False
 show_second_card = False
 player_standing = False
 dealer_turn = False
-bank_updated = False
 
 detection_started = False
 
@@ -455,8 +449,8 @@ while True:
                 if not game_started:
                     if player_bid >= player_bank:
                         player_bid = player_bank
-                    if player_bid + 10 <= player_bank:  
-                        player_bid += 10
+                    if player_bid + 1000 <= player_bank:  
+                        player_bid += 1000
             elif event.key == pygame.K_DOWN:
                 if not game_started:
                     if player_bid >= player_bank:
@@ -603,7 +597,6 @@ while True:
 
     if not game_started:
         frame = overlay_image_center(frame, boost_image_resized)
-        bank_updated = False
         
         
     # Game logic
@@ -611,12 +604,6 @@ while True:
         # screen.fill((0, 0, 0)) 
         display_dealer_area(screen, font)
         display_stand_button(screen, font)
-
-        if blackjack_reached and not bank_updated:
-            win_reached = True
-            player_bank += player_bid
-            bank_updated = True  # Set the flag to indicate the bank has been updated
-            update_background()
 
         # Dealer turn logic
         if dealer_turn:

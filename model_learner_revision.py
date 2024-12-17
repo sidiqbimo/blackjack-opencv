@@ -96,6 +96,6 @@ plt.title('Confusion Matrix')
 plt.show()
 
 # Save model
-model_path = "card_classifier_model.keras"
+model_path = "new18_card_classifier_model.keras"
 model.save(model_path)
 print(f"Model saved at {model_path}")

@@ -130,7 +130,7 @@ plt.title('Confusion Matrix')
 plt.show()
 
 # Save the model
-model_path = "D:\\Programming\\Python\\cardGameProject\\card_classifier_model.keras"
+model_path = "D:\\Programming\\Python\\cardGameProject\\new17dec_card_classifier_model.keras"
 model.save(model_path, save_format='keras')
 print(f"Model saved at {model_path}")
 

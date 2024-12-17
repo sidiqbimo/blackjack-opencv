@@ -1,2 +1,11 @@
 dataset/
 kaggle_set/
+venv/
+__pycache__/quran.cpython-312.pyc
+akk-card_classifier_model.keras
+model_learner_new
+model_learner_rev17dec.py
+model_learner.py
+new18card_classifier_model.keras
+model_learner_revision.py
+test.py
