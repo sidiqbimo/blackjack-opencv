@@ -17,7 +17,10 @@ font = pygame.font.Font(None, 36)
 window_size = (600,800)
 
 
+# model_path = "D:\\Programming\\Python\\cardGameProject\\kaggle_set\\train\\card_classifier_model.keras"
+# model_path = "D:\\Programming\\Python\\cardGameProject\\new18card_classifier_model.keras"
 model_path = "D:\\Programming\\Python\\cardGameProject\\akk-card_classifier_model.keras"
+
 model = load_model(model_path)
 
 
@@ -97,9 +100,6 @@ dealer_cards.append(pick_card(card_directory))  # Second card (face down)
 dealer_card_values = [dealer_cards[0][1], dealer_cards[1][1]]
 
 
-
-
-# Add "Stand" button functionality
 def display_stand_button(screen, font):
     pygame.draw.rect(screen, (200, 200, 200), (20, 450, 100, 50))  # Grey rectangle
     if isinstance(font, pygame.font.Font):  # Ensure font is a Font object
@@ -158,7 +158,7 @@ def preprocess_image(image):
     image = image.astype(np.float32) / 255.0
     return np.expand_dims(image, axis=0)
 
-boost_image = cv2.imread("D:\\Programming\\Python\\cardGameProject\\illust\\boost.png", cv2.IMREAD_UNCHANGED)
+boost_image = cv2.imread("D:\\Programming\\Python\\cardGameProject\\illust\\hilo_boost.png", cv2.IMREAD_UNCHANGED)
 ensure_image = cv2.imread("D:\\Programming\\Python\\cardGameProject\\illust\\ensure.png", cv2.IMREAD_UNCHANGED)
 blackjack_image = cv2.imread("D:\\Programming\\Python\\cardGameProject\\illust\\blackjack.png", cv2.IMREAD_UNCHANGED)
 busted_image = cv2.imread("D:\\Programming\\Python\\cardGameProject\\illust\\busted.png", cv2.IMREAD_UNCHANGED)
@@ -166,13 +166,12 @@ win_image = cv2.imread("D:/Programming/Python/cardGameProject/illust/win.png", c
 lost_image = cv2.imread("D:/Programming/Python/cardGameProject/illust/lost.png", cv2.IMREAD_UNCHANGED)
 push_image = cv2.imread("D:/Programming/Python/cardGameProject/illust/push.png", cv2.IMREAD_UNCHANGED)
 
-background_image_bid_path = "D:\\Programming\\Python\\cardGameProject\\illust\\bg_bid.png"
-background_image_gamestart_path = "D:\\Programming\\Python\\cardGameProject\\illust\\bg_steady.png"
-background_image_win_path = "D:\\Programming\\Python\\cardGameProject\\illust\\bg_win.png"
-background_image_lost_path = "D:\\Programming\\Python\\cardGameProject\\illust\\bg_lost.png"
-background_image_bankrupt_path = "D:\\Programming\\Python\\cardGameProject\\illust\\bg_bankrupt.png"
+background_drawtoready = "D:\\Programming\\Python\\cardGameProject\\illust\\hilo_draw.png"
+background_playstate = "D:\\Programming\\Python\\cardGameProject\\illust\\hilo_play.png"
+background_won = "D:\\Programming\\Python\\cardGameProject\\illust\\hilo_won.png"
+background_lost = "D:\\Programming\\Python\\cardGameProject\\illust\\hilo_lost.png"
 
-background_image = pygame.image.load(background_image_bid_path)
+background_image = pygame.image.load(background_drawtoready)
 background_image = pygame.transform.scale(background_image, (window_size)) 
 
 
@@ -181,17 +180,17 @@ def update_background():
     if player_bank <= 0:
         background_image = pygame.image.load(background_image_bankrupt_path)
     elif win_reached:
-        background_image = pygame.image.load(background_image_win_path)
+        background_image = pygame.image.load(background_won)
     elif lost_reached:
-        background_image = pygame.image.load(background_image_lost_path)
+        background_image = pygame.image.load(background_lost)
     elif busted_reached:
-        background_image = pygame.image.load(background_image_lost_path)
+        background_image = pygame.image.load(background_lost)
     elif blackjack_reached:
-        background_image = pygame.image.load(background_image_win_path)
+        background_image = pygame.image.load(background_won)
     elif game_started:
-        background_image = pygame.image.load(background_image_gamestart_path)
+        background_image = pygame.image.load(background_playstate)
     else:
-        background_image = pygame.image.load(background_image_bid_path)
+        background_image = pygame.image.load(background_drawtoready)
 
     # Ensure scaling
     background_image = pygame.transform.scale(background_image, window_size)
@@ -269,28 +268,11 @@ def overlay_image_center(frame, overlay):
     return frame
 
 def reset_game():
-    global blackjack_reached, busted_reached, total_blackjack_value, dealer_cards, dealer_card_values, start_time, player_bid, win_reached, lost_reached, show_second_card, detection_started, game_started, push_reached
-
-    blackjack_reached = False
-    busted_reached = False
-    total_blackjack_value = 0
-    dealer_cards.clear()
-    dealer_card_values.clear()
-    initialize_dealer_cards()  
-    start_time = time.time()
-    detected_cards.clear()
-    show_second_card = False
-
-    win_reached = False
-    lost_reached = False
-    push_reached = False
-    detection_started = False
-    game_started = False
-
-    update_background()
-
-    if player_bid >= player_bank:
-        player_bid = player_bank
+    global computer_card, player_card, phase
+    computer_card = pick_card(card_directory)  # Draw computer's card
+    player_card = None
+    phase = "ready"
+    background_image = pygame.image.load(background_drawtoready)
 
 def count_card_value(class_id):
     # Assuming class_id corresponds to card values (e.g., 0-9 for 2-10, 10 for J, 11 for Q, 12 for K, 13 for A)
@@ -307,7 +289,7 @@ def backtomenu():
     subprocess.run(["python", "D:/Programming/Python/cardGameProject/blackjack_mainmenu.py"])
     sys.exit() 
 
-cam = cv2.VideoCapture(3)
+cam = cv2.VideoCapture(3) 
 if not cam.isOpened():
     print("Error: Couldn't open camera.")
     exit(1)
@@ -336,6 +318,11 @@ clock = pygame.time.Clock()
 # Bank and Bid initialization
 player_bank = 2000
 player_bid = 100
+
+phase = "ready"  # Game phases: 'ready', 'guessing', 'result'
+computer_card = None
+player_card = None
+
 
 # Function to handle bidding display and logic
 def display_bidding_area(screen, font, player_bank, player_bid):
@@ -420,11 +407,13 @@ def display_dealer_area(screen, font):
     screen.blit(bank_total_text, (120, 10))  # Adjust position as needed
 
 
+
 initialize_dealer_cards()
 game_started = False
 show_second_card = False
 player_standing = False
 dealer_turn = False
+bank_updated = False
 
 detection_started = False
 
@@ -433,42 +422,19 @@ while True:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                if win_reached or lost_reached or busted_reached or blackjack_reached or push_reached:
-                    reset_game()  # Prepare for next round
-            elif event.key == pygame.K_r and player_bank <= 0:
-                player_bank = 2000
-                update_background()
-                reset_game()
+            if phase == "guessing":
+                guess = "UP" if event.key == pygame.K_UP else "DOWN"
+                correct = (player_card > computer_card[1]) if guess == "UP" else (player_card < computer_card[1])
+                
+                # Update result background
+                background_image = pygame.image.load(background_won if correct else background_lost)
+                phase = "result"
             elif event.key == pygame.K_m:
                 backtomenu()
             elif event.key == pygame.K_q:
                 pygame.quit()
                 sys.exit()
-            elif event.key == pygame.K_UP:
-                if not game_started:
-                    if player_bid >= player_bank:
-                        player_bid = player_bank
-                    if player_bid + 1000 <= player_bank:  
-                        player_bid += 1000
-            elif event.key == pygame.K_DOWN:
-                if not game_started:
-                    if player_bid >= player_bank:
-                        player_bid = player_bank
-                    if player_bid - 10 > 0: 
-                        player_bid -= 10
-            elif event.key == pygame.K_RETURN: 
-                # screen.fill((0, 0, 0))  color black
-                print(f"Game started with a bid of ${player_bid}")
-                game_started = True 
-                detection_started = True
-                break
-            elif event.key == pygame.K_s and game_started and not dealer_turn and not blackjack_reached and not busted_reached:
-                player_standing = True
-                show_second_card = True
-                dealer_turn = True
-                dealer_visible_total = sum(dealer_card_values)
-                dealer_draw_card()
+
 
     update_background()
     screen.blit(background_image, (0, 0))  # Display backgrond image
@@ -550,25 +516,13 @@ while True:
             if card_image.size > 0:
                 preprocessed_card = preprocess_image(card_image)
                 prediction = model.predict(preprocessed_card)
-                # print(f"Prediction: {prediction}")  
                 class_id = np.argmax(prediction)
                 confidence = prediction[0][class_id]
-                # print(f"Class ID: {class_id}, Confidence: {confidence}")  
-                
-                if confidence > 0.6:
-                    if class_id not in detected_cards:
-                        if overlay_displayed is None and detection_started is True:
-                                detected_cards[class_id] = True
-                                total_blackjack_value += blackjack_values[class_id]
+                if confidence > 0.6 and phase == "ready":
+                    player_card = count_card_value(class_id)  # Store player card value
+                    background_image = pygame.image.load(background_playstate)
+                    phase = "guessing"  # Move to guessing phase
 
-                    # Visualize detection
-                    label = f"{class_labels[class_id]} ({confidence:.2f})"
-                    cv2.drawContours(frame, [approx], 0, (0, 255, 0), 2)
-                    for point in approx:
-                        cv2.circle(frame, tuple(point[0]), 5, (0, 0, 255), -1)
-                    cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
-                else:
-                    print(f"Low confidence for class {class_id}: {confidence}")
 
     # Check for blackjack or busted
     if total_blackjack_value == 21:
@@ -597,6 +551,7 @@ while True:
 
     if not game_started:
         frame = overlay_image_center(frame, boost_image_resized)
+        bank_updated = False
         
         
     # Game logic
@@ -604,6 +559,12 @@ while True:
         # screen.fill((0, 0, 0)) 
         display_dealer_area(screen, font)
         display_stand_button(screen, font)
+
+        if blackjack_reached and not bank_updated:
+            win_reached = True
+            player_bank += player_bid
+            bank_updated = True  # Set the flag to indicate the bank has been updated
+            update_background()
 
         # Dealer turn logic
         if dealer_turn:

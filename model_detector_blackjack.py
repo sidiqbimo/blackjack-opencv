@@ -311,7 +311,7 @@ def backtomenu():
     subprocess.run(["python", "D:/Programming/Python/cardGameProject/blackjack_mainmenu.py"])
     sys.exit() 
 
-cam = cv2.VideoCapture(3)
+cam = cv2.VideoCapture(3) 
 if not cam.isOpened():
     print("Error: Couldn't open camera.")
     exit(1)

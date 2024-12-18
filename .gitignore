@@ -9,3 +9,6 @@ model_learner.py
 new18card_classifier_model.keras
 model_learner_revision.py
 test.py
+testingheartgp.py
+model_detector_heart.py
+cameralist.py
