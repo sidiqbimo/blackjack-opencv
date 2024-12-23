@@ -7,6 +7,8 @@ import os
 import time
 import random
 import json
+import subprocess
+import sys
 
 pygame.init()
 pygame.font.init()
@@ -103,6 +105,11 @@ def preprocess_image(image):
     image = image.astype(np.float32) / 255.0
     return np.expand_dims(image, axis=0)
 
+def backtomenu():
+    pygame.quit()  
+    subprocess.run(["python", "D:/Programming/Python/cardGameProject/blackjack_mainmenu.py"])
+    sys.exit() 
+
 # Function to detect player's card
 def detect_player_card():
     global player_card, phase, background_image, detected_class_id
@@ -186,9 +193,47 @@ def get_card_file_name(class_label):
             return card_file
     return None
 
+def draw_text(surface, text, position, font, color=(255, 255, 255)):
+    words = [word.split(' ') for word in text.splitlines()]
+    space = font.size(' ')[0]
+    max_width, max_height = surface.get_size()
+    x, y = position
+    for line in words:
+        for word in line:
+            word_surface = font.render(word, True, color)
+            word_width, word_height = word_surface.get_size()
+            if x + word_width >= max_width:
+                x = position[0]  # Reset the x.
+                y += word_height  # Start on new row.
+            surface.blit(word_surface, (x, y))
+            x += word_width + space
+        x = position[0]  # Reset the x.
+        y += word_height  # Start on new row.
+
+def draw_text_with_background(surface, text, position, font, text_color=(255, 255, 255), bg_color=(0, 0, 0)):
+    words = [word.split(' ') for word in text.splitlines()]
+    space = font.size(' ')[0]
+    max_width, max_height = surface.get_size()
+    x, y = position
+    for line in words:
+        for word in line:
+            word_surface = font.render(word, True, text_color)
+            word_width, word_height = word_surface.get_size()
+            if x + word_width >= max_width:
+                x = position[0]  # Reset the x.
+                y += word_height  # Start on new row.
+            # Create background surface for the text
+            bg_surface = pygame.Surface((word_width, word_height))
+            bg_surface.fill(bg_color)
+            surface.blit(bg_surface, (x, y))
+            surface.blit(word_surface, (x, y))
+            x += word_width + space
+        x = position[0]  # Reset the x.
+        y += word_height  # Start on new row.
+
 # Function to handle player's guess
 def handle_guess(is_higher, class_id):
-    global phase, background_image
+    global phase, background_image, result_text
     player_card_value = player_card
     computer_card_label = computer_card.split("_")[0]  # Get the card label
     computer_card_value = card_value_mapping.get(computer_card_label, 0)  # Get the card value
@@ -196,19 +241,23 @@ def handle_guess(is_higher, class_id):
     if (is_higher and player_card_value > computer_card_value) or (not is_higher and player_card_value < computer_card_value):
         print("Player won!")
         background_image = pygame.image.load(background_won)
+        result_text = f"Computer drew {computer_card.replace('_', ' ')} valued {computer_card_value}, you drew {class_labels[class_id]} valued {player_card_value}. Your prediction was correct, you won!"
     else:
         print("Player lost!")
         background_image = pygame.image.load(background_lost)
+        result_text = f"Computer drew {computer_card.replace('_', ' ')} valued {computer_card_value}, you drew {class_labels[class_id]} valued {player_card_value}. Your prediction was incorrect, you lost!"
     
     # Get the file names for the card images
     player_card_file = get_card_file_name(class_labels[class_id].split("(")[0])
     computer_card_file = computer_card
 
-    # Display card images
+    # Load and resize card images
     player_card_image = pygame.image.load(f"D:/Programming/Python/cardGameProject/illust/cardpile/{player_card_file}.png")
     computer_card_image = pygame.image.load(f"D:/Programming/Python/cardGameProject/illust/cardpile/{computer_card_file}.png")
-    screen.blit(player_card_image, (100, 300))
-    screen.blit(computer_card_image, (400, 300))
+    player_card_image = pygame.transform.scale(player_card_image, (100, 150))  # Resize to 100x150
+    computer_card_image = pygame.transform.scale(computer_card_image, (100, 150))
+    screen.blit(player_card_image, (280, 150))
+    screen.blit(computer_card_image, (480, 150))
     
     phase = "result"
 
@@ -239,11 +288,30 @@ while running:
                 computer_card = pick_card("path_to_card_images")
                 player_card = None
                 background_image = pygame.image.load(background_drawtoready)
+            elif event.key == pygame.K_m:
+                backtomenu()
+            elif event.key == pygame.K_q:
+                pygame.quit()
+                sys.exit()
 
     screen.blit(background_image, (0, 0))
 
     if phase == "ready":
         detect_player_card()
+    elif phase == "result":
+        # Display card images
+        player_card_file = get_card_file_name(class_labels[detected_class_id].split("(")[0])
+        computer_card_file = computer_card
+        player_card_image = pygame.image.load(f"D:/Programming/Python/cardGameProject/illust/cardpile/{player_card_file}.png")
+        computer_card_image = pygame.image.load(f"D:/Programming/Python/cardGameProject/illust/cardpile/{computer_card_file}.png")
+
+        player_card_image = pygame.transform.scale(player_card_image, (100, 150))  # Resize to 100x150
+        computer_card_image = pygame.transform.scale(computer_card_image, (100, 150))
+        screen.blit(player_card_image, (280, 150))
+        screen.blit(computer_card_image, (480, 150))
+        
+        # Render result text with background
+        draw_text_with_background(screen, result_text, (50, 50), font, text_color=(255, 255, 255), bg_color=(0, 0, 0))
 
     # Display the camera feed
     ret, frame = cam.read()

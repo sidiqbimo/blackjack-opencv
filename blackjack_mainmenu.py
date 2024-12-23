@@ -54,7 +54,34 @@ def gamestart():
     sys.exit() 
 
 def gamecrazy():
-    sys.exit()
+    surface.fill((0, 0, 0)) 
+    font = pygame.font.Font(pygame_menu.font.FONT_HELVETICA, 36)  
+    text = font.render("Please wait...", True, (255, 255, 255))  
+    text_rect = text.get_rect(center=(surface.get_width() // 2, surface.get_height() // 2))  
+    surface.blit(text, text_rect)  
+    pygame.display.update()
+    
+    pygame.time.wait(3000)  
+    
+    pygame.quit()  
+
+    subprocess.run(["python", "D:/Programming/Python/cardGameProject/testingheart.py"])
+
+    sys.exit() 
+
+def guidemenu():
+    surface.fill((0, 0, 0)) 
+    font = pygame.font.Font(pygame_menu.font.FONT_HELVETICA, 36)  
+    text = font.render("Please wait...", True, (255, 255, 255))  
+    text_rect = text.get_rect(center=(surface.get_width() // 2, surface.get_height() // 2))  
+    surface.blit(text, text_rect)  
+    pygame.display.update()
+    
+    pygame.quit()  
+
+    subprocess.run(["python", "D:/Programming/Python/cardGameProject/guide.py"])
+
+    sys.exit() 
 
 def gamecalibrate():
     surface.fill((0, 0, 0)) 
@@ -75,7 +102,7 @@ def gamecalibrate():
 menu.add.button('Play Blackjack', gamestart)
 menu.add.button('Play Traditional Heart', gamecrazy)
 menu.add.button('Calibrate', gamecalibrate)
-menu.add.button('Guide', lambda: print("Guide"))
+menu.add.button('Guide', guidemenu)
 menu.add.button('Quit', pygame_menu.events.EXIT)
 
 # main loop
